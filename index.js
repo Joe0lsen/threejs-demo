@@ -1,9 +1,11 @@
-import * as THREE from 'https://unpkg.com/three@0.127.0/build/three.module.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+// Model Loader
+const loader = new GLTFLoader();
 
 // HTML Canvas
 const canvas = document.querySelector('.webgl');
-
 const size = {
     width: window.innerWidth,
     height: window.innerHeight
@@ -12,7 +14,7 @@ const size = {
 // Camera
 const camera = new THREE.PerspectiveCamera(75, size.width / size.height, 0.1, 500);
 camera.position.set(0,3,30);
-camera.rotation.x = -15 * Math.PI / 180;
+camera.rotation.x = dToR(-15);
 
 // Scene
 const scene = new THREE.Scene();
@@ -46,17 +48,47 @@ scene.add( backLightHelper );
 
 // Geometry
 const geometry = new THREE.IcosahedronGeometry(3);
-const material = new THREE.MeshStandardMaterial({color:'#0ff', roughness: 0.4, metalness:0.4});
+const material = new THREE.MeshStandardMaterial({color:'#0ff', roughness: 0.4, metalness:0.4, transparent: true, opacity: 0.1});
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
+// Keyboard
+const keyboardData = await loader.loadAsync('models/keyboard.glb');
+const keyboardGeometry = keyboardData.scene.children[0].geometry;
+const keyboardMaterial = new THREE.MeshStandardMaterial({color:'#ffd'})
+const keyboardMesh = new THREE.Mesh(keyboardGeometry, keyboardMaterial);
+scene.add(keyboardMesh);
+keyboardMesh.position.set(0,0,10);
+keyboardMesh.rotation.x = dToR(45);
+keyboardMesh.scale.set(3,3,3);
 
 // Animation
 function animate() {
     mesh.rotation.y += 0.01;
     mesh.rotation.z += 0.01;
+    keyboardMesh.rotation.y -= 0.01;
+    keyboardMesh.rotation.z -= 0.01;
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 }
 animate();
+
+function dToR(degrees) {
+    /**
+     * Converts degrees to radians {@link dToR}
+     * @param {Number} degrees
+     * @return {Number} radians
+    */ 
+    return degrees * Math.PI / 180;
+}
+
+// Resize
+window.addEventListener('resize', () => {
+    size.width = window.innerWidth;
+    size.height = window.innerHeight;
+
+    camera.aspect = size.width / size.height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(size.width, size.height);
+});
 
